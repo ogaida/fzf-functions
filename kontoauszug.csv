@@ -1,0 +1,4 @@
+"Buchungsdatum";"Wertstellung";"Status";"Zahlungspflichtige*r";"Zahlungsempfänger*in";"Verwendungszweck";"Umsatztyp";"IBAN";"Betrag (€)";"Gläubiger-ID";"Mandatsreferenz";"Kundenreferenz"
+"16.12.24";"16.12.24";"Gebucht";"Max";"Max";"für Oma";"Eingang";"DE49XXX";"123";"";"";""
+"18.11.24";"18.11.24";"Gebucht";"Franz";"Franz";"für Oma";"Eingang";"DE49XXX";"234";"";"";""
+"16.12.24";"16.10.24";"Gebucht";"Franz";"Franz";"für Opa";"Eingang";"DE49XXX";"345";"";"";""

@@ -1,0 +1,62 @@
+alias file_search="fzf -e -i --height=50% --preview=\"batcat --theme='Solarized (dark)' --style=numbers --color=always {} | head -500\" --walker=file,dir,hidden --walker-skip=Library,.git,node_modules"
+alias file_stats="fzf -e -i --height=50% --preview=\"stat {}\" --walker=file,dir,hidden --walker-skip=Library,.git,node_modules"
+
+# logik: and ist implizit, "oder" == Pipe. "not" == !
+
+alias filesearch=file_search
+
+function kontoauszug_preview(){
+    # calculate the sum of the fifth field if $1 has more then 1 line else print line 1 better readable
+    temp_file=$1
+    lines=$(cat $temp_file|wc -l)
+    if [ $lines -gt 1 ]
+    then
+        awk -F'|' 'BEGIN{sum=0}{sum += $5}END{print sum}' $temp_file
+    else
+        cat $temp_file |tr '|' '\n'
+    fi
+}
+export -f kontoauszug_preview
+
+function cat_utf_8(){
+    # converts the input textfile from any mime-encoding to utf-8
+    file=$1
+    if [ "$(file --mime-encoding $file|awk '{print $NF}')" != "utf-8" ]
+    then
+        iconv --from-code=$(file --mime-encoding $file|awk '{print $NF}') --to-code=UTF-8 $file
+    else
+        # is already utf-8
+        /bin/cat $file
+    fi
+}
+export -f cat_utf_8
+
+function json_compact(){
+    # converts a csv with ;-delimiter to compact json
+    cat_utf_8 $1 |mlr --icsv --ifs ';' --ojson cat|jq -c '.[]'
+}
+
+function kontoauszug_check(){
+    # mit mlr: Spalten umbenennen, Datum umformatieren, spaltenweise per regex ersetzen und nur bestimmte Spalten auswählen
+    file=$1
+    cat_utf_8 $file |mlr --icsv --ifs ';' --omd \
+        rename -r "Betrag.*",a,".*(tag|datum)",d,".*(empfänger|Begünstigter).*",e,".*zweck",z \
+        then put '$d=strftime(strptime_local($d, "%d.%m.%y"),"%y-%m-%d");' \
+        then cut -o -f d,e,z,a | \
+        fzf -i -e -f '!lohn !gehalt'|\
+        sed 1,2d |\
+        fzf -i -e -m --bind ctrl-t:toggle-all --preview="kontoauszug_preview {+f}"
+}
+
+function kontoauszug_filter_by_val(){
+    file=$1
+    min=${2:-"-100000"}
+    max=${3:-"100000"}
+    cat_utf_8 $file | mlr --icsv --ifs ';' --ojson \
+        rename -r "Betrag.*",a,".*(tag|datum)",d,".*(empfänger|Begünstigter).*",e,".*zweck",z \
+        then put '$d=strftime(strptime_local($d, "%d.%m.%y"),"%y-%m-%d");' \
+        then cut -o -f d,e,z,a |\
+        jq --arg max $max --arg min $min '.[]|select(all((.a|tostring|gsub("\\.";"")|gsub("\\,";".")|tonumber); . < ($max|tonumber) and . > ($min|tonumber) ))' |\
+        jq -s .|mlr --ijson --ocsv --ofs '|' cat |sort -n |\
+        fzf -i -e -f '!lohn !gehalt'|sed 1d|fzf -i -e --preview "cat {+f} | tr '|' '\n'"
+}
