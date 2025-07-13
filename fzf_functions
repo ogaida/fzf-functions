@@ -48,7 +48,7 @@ function kontoauszug_check(){
         fzf -i -e -m --bind ctrl-t:toggle-all --preview="kontoauszug_preview {+f}"
 }
 
-function kontoauszug_filter_by_val(){
+function kontoauszug_filter_by_range(){
     file=$1
     min=${2:-"-100000"}
     max=${3:-"100000"}
