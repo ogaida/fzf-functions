@@ -24,7 +24,7 @@ sudo mv fzf /usr/bin/
 
 ```bash
 git clone https://github.com/ogaida/fzf-functions
-. fzf-functions/fzf-functions
+. fzf-functions/fzf_functions
 ```
 now you are ready
 
